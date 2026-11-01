@@ -17,13 +17,15 @@
   @media (prefers-color-scheme:dark){:root{--bg:#0f1418;--card:#1a2026;--ink:#eceae6;--mute:#8b9197;--acc:#2fbf72;--line:#353c43;--chip:#262a2e}}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
-  body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;display:flex;flex-direction:column;justify-content:flex-end;padding:6px 10px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
-  #grip{height:30px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;flex:none}
+  body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;display:flex;flex-direction:column;justify-content:flex-start;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top))}
+  .tools{display:flex;justify-content:flex-end;align-items:center;gap:2px;height:44px}
+  .row{display:flex;align-items:flex-start;gap:8px}
+  #grip{height:34px;margin-right:64px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;flex:none}
   #grip span{width:48px;height:5px;border-radius:9px;background:var(--line)}
   #grip.drag span{background:var(--acc)}
-  .panel{position:relative;display:flex;align-items:flex-end;gap:4px;background:var(--card);border:1.5px solid var(--line);border-radius:30px;padding:6px;transition:border-color .2s}
+  .panel{position:relative;flex:1;min-width:0;display:flex;background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:2px 8px;transition:border-color .2s}
   .panel:focus-within{border-color:var(--acc)}
-  textarea{flex:1;min-width:0;height:48px;border:0;padding:11px 8px;font:inherit;font-size:19px;line-height:1.4;background:transparent;color:var(--ink);resize:none;transition:opacity .2s}
+  textarea{flex:1;min-width:0;height:80px;border:0;padding:11px 8px;font:inherit;font-size:19px;line-height:1.4;background:transparent;color:var(--ink);resize:none;transition:opacity .2s}
   textarea:focus{outline:none}
   textarea::placeholder{color:var(--mute)}
   textarea.busy{opacity:.45}
@@ -32,15 +34,14 @@
   button:active{transform:scale(.9)}
   button:disabled{opacity:.35}
   button svg{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  #fix{width:52px;height:52px;border-radius:50%;background:var(--acc);color:#fff;margin:-2px}
+  #fix{width:56px;height:56px;border-radius:50%;background:var(--acc);color:#fff;margin-top:12px}
   #fix svg{width:26px;height:26px}
   #fix.spin svg{animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .sep{width:1.5px;height:30px;background:var(--line);margin:0 4px 9px;flex:none;border-radius:2px}
-  .icon{width:40px;height:48px;border-radius:14px}
+  .icon{width:44px;height:44px;border-radius:14px}
   .icon svg{width:23px;height:23px}
   #orig.on{color:var(--acc)}
-  #toast{position:fixed;bottom:calc(var(--ph,80px) + 18px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;z-index:5}
+  #toast{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;z-index:5}
   #toast.on{opacity:.92}
   /* key sheet */
   #keyScrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:16px;z-index:10}
@@ -56,17 +57,20 @@
 </style>
 </head>
 <body>
-  <div id="grip" aria-label="שנה גודל"><span></span></div>
-  <div class="panel" id="panel">
-    <button id="fix" aria-label="תקן"><svg viewBox="0 0 24 24"><path d="M4 20L15 9"/><path d="M13 7l4 4"/><path d="M18 2.5v3M16.5 4h3"/><path d="M20.5 9v2.5M19.25 10.25h2.5"/><path d="M9 3v2M8 4h2"/></svg></button>
-    <textarea id="in" rows="1" placeholder="כתוב איך שיוצא…"></textarea>
-    <span class="sep"></span>
+  <div class="tools">
     <button id="orig" class="icon" aria-label="מה כתבתי" style="display:none"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></button>
     <button id="copy" class="icon" aria-label="העתק"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></button>
     <button id="clear" class="icon" aria-label="מחק"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
     <button id="keyBtn" class="icon" aria-label="מפתח"><svg viewBox="0 0 24 24"><circle cx="7.5" cy="16.5" r="4"/><path d="M10.5 13.5L20 4M16.5 7.5l3 3M14.5 9.5l2 2"/></svg></button>
   </div>
-  <div id="toast"></div>
+  <div class="row">
+    <button id="fix" aria-label="תקן"><svg viewBox="0 0 24 24"><path d="M4 20L15 9"/><path d="M13 7l4 4"/><path d="M18 2.5v3M16.5 4h3"/><path d="M20.5 9v2.5M19.25 10.25h2.5"/><path d="M9 3v2M8 4h2"/></svg></button>
+    <div class="panel" id="panel">
+      <textarea id="in" rows="2" placeholder="כתוב איך שיוצא…"></textarea>
+      <div id="toast"></div>
+    </div>
+  </div>
+  <div id="grip" aria-label="שנה גודל"><span></span></div>
 
 <div id="keyScrim">
     <div class="sheet" role="dialog" aria-modal="true">
@@ -211,18 +215,18 @@ inp.addEventListener('contextmenu',e=>e.preventDefault());
 $('copy').onclick=copy;
 $('clear').onclick=()=>{ if(ctrl) ctrl.abort(); if(!inp.value) return; pushUndo(); setText(''); inp.focus(); };
 
-// drag to resize (handle is above the box: drag up = taller)
+// drag to resize (handle is below the box: drag down = taller)
 const grip=$('grip'), panel=$('panel');
-const MIN_H=48;
-function setH(h){const max=Math.max(MIN_H,window.innerHeight-90); h=Math.max(MIN_H,Math.min(h,max)); inp.style.height=h+'px'; document.documentElement.style.setProperty('--ph',panel.offsetHeight+'px'); return h}
-let h0=0; try{h0=+localStorage.getItem('inH')}catch(e){} setH(h0||MIN_H);
+const MIN_H=80;
+function setH(h){const max=Math.max(MIN_H,window.innerHeight-inp.getBoundingClientRect().top-50); h=Math.max(MIN_H,Math.min(h,max)); inp.style.height=h+'px'; document.documentElement.style.setProperty('--ph',panel.offsetHeight+'px'); return h}
+let h0=0; try{h0=+localStorage.getItem('inH2')}catch(e){} setH(h0||MIN_H);
 window.addEventListener('resize',()=>setH(parseInt(inp.style.height)||MIN_H));
 let sy=0, sh=0;
 grip.addEventListener('pointerdown',e=>{sy=e.clientY; sh=inp.getBoundingClientRect().height; grip.setPointerCapture(e.pointerId); grip.classList.add('drag')});
-grip.addEventListener('pointermove',e=>{if(!grip.classList.contains('drag'))return; setH(sh-(e.clientY-sy))});
-const endDrag=()=>{if(!grip.classList.contains('drag'))return; grip.classList.remove('drag'); try{localStorage.setItem('inH',parseInt(inp.style.height))}catch(e){}};
+grip.addEventListener('pointermove',e=>{if(!grip.classList.contains('drag'))return; setH(sh+(e.clientY-sy))});
+const endDrag=()=>{if(!grip.classList.contains('drag'))return; grip.classList.remove('drag'); try{localStorage.setItem('inH2',parseInt(inp.style.height))}catch(e){}};
 grip.addEventListener('pointerup',endDrag); grip.addEventListener('pointercancel',endDrag);
-grip.addEventListener('dblclick',()=>{setH(MIN_H);try{localStorage.removeItem('inH')}catch(e){}});
+grip.addEventListener('dblclick',()=>{setH(MIN_H);try{localStorage.removeItem('inH2')}catch(e){}});
 
 // installable app: offline shell
 if('serviceWorker' in navigator && location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
