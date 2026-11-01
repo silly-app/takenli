@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>תקן לי</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f6f4f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121416" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f6f4f0;--card:#fff;--ink:#1f2328;--mute:#80868d;--acc:#2f7d68;--line:#e2ddd5;--chip:#ece8e1}
+  @media (prefers-color-scheme:dark){:root{--bg:#121416;--card:#1c1f22;--ink:#eceae6;--mute:#8b9197;--acc:#4fb196;--line:#2c3035;--chip:#262a2e}}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;display:flex;flex-direction:column;padding:8px;padding-top:max(8px,env(safe-area-inset-top));gap:8px}
+  .box{position:relative;flex:1;min-height:70px;display:flex}
+  .box.sized{flex:none}
+  #grip{height:40px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;margin-top:-4px}
+  #grip span{width:44px;height:5px;border-radius:9px;background:var(--line)}
+  #grip.drag span{background:var(--acc)}
+  textarea{flex:1;width:100%;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;font-size:19px;line-height:1.5;background:var(--card);color:var(--ink);resize:none;transition:opacity .2s}
+  textarea:focus{outline:none;border-color:var(--acc)}
+  textarea.busy{opacity:.45}
+  textarea.lp{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 35%,transparent)}
+  .bar{display:flex;gap:6px;align-items:center}
+  button{border:0;border-radius:999px;font:inherit;font-size:15px;font-weight:500;cursor:pointer;height:40px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;background:var(--chip);color:var(--ink);transition:transform .08s,opacity .2s}
+  button:active{transform:scale(.95)}
+  button:disabled{opacity:.35}
+  button svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  #fix{background:var(--acc);color:#fff;font-weight:700;padding:0 20px}
+  .spacer{flex:1}
+  #orig.on{background:var(--acc);color:#fff}
+  .icon{width:40px;padding:0;justify-content:center}
+  #toast{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap}
+  #toast.on{opacity:.9}
+  /* key sheet */
+  #keyScrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:16px;z-index:10}
+  #keyScrim.on{display:flex}
+  .sheet{width:100%;max-width:460px;background:var(--card);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;margin-top:8vh}
+  .sheet h2{margin:0;font-size:20px}
+  .sheet p{margin:0;color:var(--mute);font-size:15px;line-height:1.5}
+  .sheet a{color:var(--acc);font-weight:700}
+  .sheet input{font:inherit;font-size:16px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;direction:ltr}
+  .sheet .row{display:flex;gap:8px}
+  .sheet .row button{flex:1;justify-content:center}
+  .sheet .pri{background:var(--acc);color:#fff;font-weight:700}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <button id="fix"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg><span id="fixLbl">תקן</span></button>
+    <button id="copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>העתק</button>
+    <span class="spacer"></span>
+    <button id="orig" class="icon" aria-label="מה כתבתי" style="display:none"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></button>
+    <button id="clear" class="icon" aria-label="מחק"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+    <button id="keyBtn" class="icon" aria-label="הגדרות"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></svg></button>
+  </div>
+
+  <div class="box">
+    <textarea id="in" placeholder="כתוב איך שיוצא…"></textarea>
+    <div id="toast"></div>
+  </div>
+  <div id="grip" aria-label="שנה גודל"><span></span></div>
+
+  <div id="keyScrim">
+    <div class="sheet" role="dialog" aria-modal="true">
+      <h2>מפתח API</h2>
+      <p>כדי לתקן, האפליקציה צריכה מפתח מחשבון Anthropic שלך. יוצרים אותו ב־<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> ומדביקים כאן. המפתח נשמר רק בטלפון הזה.</p>
+      <input id="keyIn" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+      <div class="row">
+        <button class="pri" id="keySave">שמור</button>
+        <button id="keyDel">מחק מפתח</button>
+        <button id="keyClose">סגור</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const inp=$('in'), toastEl=$('toast');
+let sample=null, busy=false, ctrl=null, undoStack=[], lastOrig='', lastFixed='', showingOrig=false;
+const MODEL='claude-sonnet-5-5';
+
+function save(){try{localStorage.setItem('draft',inp.value)}catch(e){}}
+try{const d=localStorage.getItem('draft'); if(d) inp.value=d;}catch(e){}
+inp.addEventListener('input',save);
+
+let tt; function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),1800)}
+function pushUndo(){undoStack.push(inp.value); if(undoStack.length>20) undoStack.shift()}
+function setText(t){inp.value=t; save()}
+
+/* ---- API key ---- */
+function getKey(){try{return localStorage.getItem('apiKey')||''}catch(e){return ''}}
+function openKey(){ $('keyIn').value=getKey(); $('keyScrim').classList.add('on'); setTimeout(()=>$('keyIn').focus(),50) }
+function closeKey(){ $('keyScrim').classList.remove('on') }
+$('keyBtn').onclick=openKey;
+$('keyClose').onclick=closeKey;
+$('keyScrim').addEventListener('click',e=>{if(e.target.id==='keyScrim')closeKey()});
+$('keySave').onclick=()=>{const k=$('keyIn').value.trim(); if(!k){toast('הדבק מפתח');return} try{localStorage.setItem('apiKey',k)}catch(e){} closeKey(); toast('המפתח נשמר ✓')};
+$('keyDel').onclick=()=>{try{localStorage.removeItem('apiKey')}catch(e){} $('keyIn').value=''; toast('המפתח נמחק')};
+
+async function apiSample(prompt,{signal}={}){
+  const key=getKey();
+  if(!key){const e=new Error('no key');e.code='no_key';throw e}
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',signal,
+    headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:MODEL,max_tokens:2000,messages:[{role:'user',content:prompt}]})
+  });
+  if(!r.ok){
+    let msg=''; try{msg=(await r.json()).error.message||''}catch(_){}
+    const e=new Error(msg);
+    e.code=r.status===401?'bad_key':r.status===429?'rate_limited':/credit/i.test(msg)?'no_credit':'api_'+r.status;
+    throw e;
+  }
+  const j=await r.json();
+  return {text:(j.content||[]).map(c=>c.text||'').join('')};
+}
+
+// Inside Claude use its built-in connection; everywhere else use the API key.
+if(window.claude&&window.claude.use){claude.use('sample').then(s=>{sample=s||apiSample}).catch(()=>{sample=apiSample})}
+else sample=apiSample;
+
+const EXAMPLES=[
+ ["יש לי מלא שגיטטת גשאני כוצב בטלפטון אני חושב שזה בחמיר","יש לי מלא שגיאות כשאני כותב בטלפון אני חושב שזה מחמיר"],
+ ["איךמאתה יגולבלעסונשרנינאגצןב ככה ואתה תתקן אותי","איך אתה יכול לעזור לי שאני אכתוב ככה ואתה תתקן אותי"],
+ ["זה חוקי אבל איך אני משתמש בזה כשרני מתכתב במה כל פעם אני אלךבלהעציק? וגם אני לא אאה את הדיחה","זה חוקי אבל איך אני משתמש בזה כשאני מתכתב? מה, כל פעם אני אלך להעתיק? וגם אני לא אראה את השיחה"],
+ ["שים את הכיפורים למעלה ותן לי אפשרות במדיכה להקטין מלמטה אתה חלון","שים את הכפתורים למעלה ותן לי אפשרות במשיכה להקטין מלמטה את החלון"],
+ ["גם תשים לב לאם אני לא שם רווחים ואם אפשר להבין על מה אנימבר יעזור","גם תשים לב אם אני לא שם רווחים, ואם אפשר להבין על מה אני מדבר זה יעזור"],
+ ["שגודל דיפןלט של החלוניתבייה 2 שורות","שגודל דיפולט של החלונית יהיה 2 שורות"],
+ ["הוא אלא מתקן טוב בוא לא מסיןבאותי משנה מילים","הוא לא מתקן טוב, הוא לא מבין אותי, משנה מילים"],
+ ["זה לא כמופה כשאת המבין","זה לא כמו פה כשאתה מבין"]
+];
+const PROMPT=(t,ctx)=>`אתה מפענח הודעות וואטסאפ בעברית שהוקלדו בטלפון על ידי אדם שמתקשה להקליד בגלל עייפות וחולשה בידיים. המטרה: לשחזר בדיוק את מה שהוא התכוון להקליד, מילה במילה, ולא לנסח מחדש.
+
+השגיאות שלו:
+- אותיות שכנות במקלדת העברית מוחלפות (למשל ג/כ/ע, ט/א, ר/ק, ש/ד, צ/מ, ב/נ/ה, ן/ם, ף/ץ, ח/ל, י/ו)
+- אותיות חסרות, עודפות או בסדר הפוך
+- הרבה פעמים אין רווחים, או שבמקום רווח נכנסה אות (בעיקר ב, נ, מ). פרק רצפים ארוכים למילים
+- מילה שבורה לשניים
+
+כללים:
+- שנה רק מילים שאינן מילים אמיתיות, או שבבירור לא מתאימות להקשר. מילה תקינה שמתאימה להקשר נשארת כמו שהיא, גם אם היא סלנג או לא דקדוקית.
+- לכל מילה שבורה בחר את המילה הקרובה ביותר באותיות שמתאימה למשפט. אל תחליף מילה במילה נרדפת "יפה יותר".
+- אל תוסיף ואל תסיר תוכן. שמור על הסדר, הסלנג, ירידות השורה והאימוג׳ים. פסיקים רק כשממש צריך.
+
+דוגמאות אמיתיות שלו:
+${EXAMPLES.map(([a,b])=>'כתב: '+a+'\nהתכוון: '+b).join('\n\n')}
+
+${ctx.length?`ההודעות האחרונות שלו, רק כדי להבין על מה הוא מדבר עכשיו (לא לתקן):
+${ctx.map(c=>'- '+c).join('\n')}
+
+`:''}חשוב קודם בקצרה על המילים הקשות, ואז כתוב את ההודעה המשוחזרת כולה בין <fixed> ל-</fixed>.
+
+ההודעה:
+${t}`;
+
+async function fix(){
+  const text=inp.value.trim();
+  if(!text||busy||!sample) return;
+  if(sample===apiSample&&!getKey()){openKey();return}
+  busy=true; $('fix').disabled=true; inp.classList.add('busy'); inp.readOnly=true;
+  let n=0; const lbl=$('fixLbl'); const iv=setInterval(()=>{lbl.textContent='מתקן'+'.'.repeat(n++%4)},300);
+  ctrl=new AbortController();
+  try{
+    let ctx=[]; try{ctx=JSON.parse(localStorage.getItem('ctx')||'[]')}catch(e){}
+    const r=await sample(PROMPT(text,ctx),{signal:ctrl.signal,cache:false,modelTier:'complex'});
+    const m=(r.text||'').match(/<fixed>([\s\S]*?)(<\/fixed>|$)/);
+    const res=m?m[1].trim():'';
+    if(res){try{const c=JSON.parse(localStorage.getItem('ctx')||'[]');c.push(res);localStorage.setItem('ctx',JSON.stringify(c.slice(-6)))}catch(e){}}
+    if(res && res!==inp.value){pushUndo(); lastOrig=inp.value; lastFixed=res; showingOrig=false; setText(res); $('orig').style.display=''; $('orig').classList.remove('on'); toast('תוקן ✓')} else toast('נראה תקין');
+  }catch(e){
+    const c=e&&e.code;
+    if(e&&e.name==='AbortError'){}
+    else if(c==='no_key'){openKey()}
+    else if(c==='bad_key'){toast('המפתח לא תקין');openKey()}
+    else if(c==='no_credit') toast('נגמר הקרדיט בחשבון Anthropic');
+    else if(c==='rate_limited') toast('רגע, נסה שוב בעוד דקה');
+    else if(c==='not_granted') toast('צריך לאשר שימוש');
+    else if(!navigator.onLine) toast('אין אינטרנט');
+    else toast('משהו השתבש, נסה שוב');
+  }finally{
+    clearInterval(iv); lbl.textContent='תקן'; busy=false; $('fix').disabled=false; inp.classList.remove('busy'); inp.readOnly=false;
+  }
+}
+
+async function copy(){
+  if(!inp.value.trim()) return;
+  try{await navigator.clipboard.writeText(inp.value); toast('הועתק ✓')}
+  catch(e){ try{inp.select(); if(document.execCommand('copy')){inp.setSelectionRange(inp.value.length,inp.value.length); toast('הועתק ✓'); return}}catch(_){} inp.focus(); inp.select(); toast('סמן והעתק')}
+}
+
+$('fix').onclick=fix;
+$('orig').onclick=()=>{ showingOrig=!showingOrig; setText(showingOrig?lastOrig:lastFixed); $('orig').classList.toggle('on',showingOrig); };
+inp.addEventListener('input',()=>{ if(lastFixed && inp.value!==lastOrig && inp.value!==lastFixed){ $('orig').style.display='none'; lastFixed=''; } });
+// long press = copy
+let lpT=null, lpReady=false, lpX=0, lpY=0;
+inp.addEventListener('pointerdown',e=>{ lpReady=false; lpX=e.clientX; lpY=e.clientY; clearTimeout(lpT);
+  lpT=setTimeout(()=>{ lpReady=true; inp.classList.add('lp'); try{navigator.vibrate&&navigator.vibrate(20)}catch(_){} },550); });
+inp.addEventListener('pointermove',e=>{ if(Math.abs(e.clientX-lpX)+Math.abs(e.clientY-lpY)>12) clearTimeout(lpT); });
+inp.addEventListener('pointercancel',()=>{ if(!lpReady) clearTimeout(lpT); });
+inp.addEventListener('touchend',e=>{ clearTimeout(lpT); if(lpReady){ e.preventDefault(); lpReady=false; inp.classList.remove('lp'); copy(); } });
+inp.addEventListener('pointerup',e=>{ clearTimeout(lpT); if(lpReady){ e.preventDefault(); lpReady=false; inp.classList.remove('lp'); copy(); } });
+inp.addEventListener('contextmenu',e=>e.preventDefault());
+$('copy').onclick=copy;
+$('clear').onclick=()=>{ if(ctrl) ctrl.abort(); if(!inp.value) return; pushUndo(); setText(''); inp.focus(); };
+
+// drag to resize
+const box=document.querySelector('.box'), grip=$('grip');
+function setH(h){const max=window.innerHeight-box.getBoundingClientRect().top-30; h=Math.max(70,Math.min(h,max)); box.style.height=h+'px'; box.classList.add('sized'); return h}
+const DEF_H=86; let h0=0; try{h0=+localStorage.getItem('boxH2')}catch(e){} setH(h0||DEF_H);
+let sy=0, sh=0;
+grip.addEventListener('pointerdown',e=>{sy=e.clientY; sh=box.getBoundingClientRect().height; grip.setPointerCapture(e.pointerId); grip.classList.add('drag')});
+grip.addEventListener('pointermove',e=>{if(!grip.classList.contains('drag'))return; setH(sh+e.clientY-sy)});
+const endDrag=()=>{if(!grip.classList.contains('drag'))return; grip.classList.remove('drag'); try{localStorage.setItem('boxH2',parseInt(box.style.height))}catch(e){}};
+grip.addEventListener('pointerup',endDrag); grip.addEventListener('pointercancel',endDrag);
+grip.addEventListener('dblclick',()=>{setH(DEF_H);try{localStorage.removeItem('boxH2')}catch(e){}});
+
+// installable app: offline shell
+if('serviceWorker' in navigator && location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>
