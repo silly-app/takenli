@@ -17,12 +17,12 @@
   @media (prefers-color-scheme:dark){:root{--bg:#0f1418;--card:#1a2026;--ink:#eceae6;--mute:#8b9197;--acc:#2fbf72;--line:#353c43;--chip:#262a2e}}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0;overflow:hidden}
-  body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;display:flex;flex-direction:column;gap:6px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:calc(14px + env(safe-area-inset-bottom));height:100dvh}
-  .tools{display:flex;justify-content:flex-end;align-items:center;gap:2px;height:44px;flex:none;margin-right:60px}
+  body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;display:flex;flex-direction:column;gap:2px;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));padding-bottom:calc(4px + env(safe-area-inset-bottom));height:100dvh}
+  .tools{display:flex;justify-content:flex-end;align-items:center;gap:2px;height:34px;flex:none;margin-right:48px}
   .row{flex:0 1 auto;min-height:0;display:flex;align-items:flex-start;gap:8px;overflow:hidden}
-  .panel{position:relative;flex:1;min-width:0;align-self:stretch;display:flex;background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:2px 8px;transition:border-color .2s}
+  .panel{position:relative;flex:1;min-width:0;align-self:stretch;display:flex;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:0 6px;transition:border-color .2s}
   .panel:focus-within{border-color:var(--acc)}
-  textarea{flex:1;min-width:0;height:auto;min-height:0;border:0;padding:11px 8px;font:inherit;font-size:19px;line-height:1.4;background:transparent;color:var(--ink);resize:none;transition:opacity .2s}
+  textarea{flex:1;min-width:0;height:auto;min-height:0;border:0;padding:7px 4px;font:inherit;font-size:17px;line-height:1.35;background:transparent;color:var(--ink);resize:none;transition:opacity .2s}
   textarea:focus{outline:none}
   textarea::placeholder{color:var(--mute)}
   textarea.busy{opacity:.45}
@@ -31,12 +31,12 @@
   button:active{transform:scale(.9)}
   button:disabled{opacity:.35}
   button svg{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  #fix{width:auto;height:52px;max-height:100%;aspect-ratio:1;padding:0;border-radius:50%;background:var(--acc);color:#fff}
+  #fix{width:auto;height:40px;max-height:100%;aspect-ratio:1;padding:0;border-radius:50%;background:var(--acc);color:#fff}
   #fix svg{width:26px;height:26px}
   #fix.spin svg{animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .icon{width:44px;height:44px;border-radius:14px}
-  .icon svg{width:23px;height:23px}
+  .icon{width:36px;height:34px;border-radius:10px}
+  .icon svg{width:19px;height:19px}
   #orig.on{color:var(--acc)}
   #orig:disabled{opacity:.25}
   #toast{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;z-index:5}
@@ -86,7 +86,7 @@
 const $=id=>document.getElementById(id);
 const inp=$('in'), toastEl=$('toast');
 let sample=null, busy=false, ctrl=null, undoStack=[], lastOrig='', lastFixed='', showingOrig=false;
-const MODEL='claude-sonnet-5-5';
+const MODEL='claude-opus-5-5';
 
 function save(){try{localStorage.setItem('draft',inp.value)}catch(e){}}
 try{const d=localStorage.getItem('draft'); if(d) inp.value=d;}catch(e){}
@@ -94,7 +94,7 @@ inp.addEventListener('input',save);
 
 let tt; function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),1800)}
 function pushUndo(){undoStack.push(inp.value); if(undoStack.length>20) undoStack.shift()}
-function autoH(){const tools=document.querySelector('.tools'); const max=Math.max(44,window.innerHeight-tools.offsetHeight-60); inp.style.height='auto'; inp.style.height=Math.min(max,Math.max(44,inp.scrollHeight))+'px'}
+function autoH(){const tools=document.querySelector('.tools'); const max=Math.max(38,window.innerHeight-tools.offsetHeight-30); inp.style.height='auto'; inp.style.height=Math.min(max,Math.max(38,inp.scrollHeight))+'px'}
 function setText(t){inp.value=t; save(); autoH()}
 inp.addEventListener('input',autoH); window.addEventListener('resize',autoH); setTimeout(autoH,0);
 
