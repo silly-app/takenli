@@ -1,4 +1,4 @@
-const CACHE = 'takenli-v4';
+const CACHE = 'takenli-v5';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-maskable.png'];
 
 self.addEventListener('install', e => {
