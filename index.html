@@ -19,7 +19,7 @@
   html,body{height:100%;margin:0;overflow:hidden}
   body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;display:flex;flex-direction:column;gap:6px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:calc(14px + env(safe-area-inset-bottom));height:100dvh}
   .tools{display:flex;justify-content:flex-end;align-items:center;gap:2px;height:44px;flex:none;margin-right:60px}
-  .row{flex:1 1 auto;min-height:0;display:flex;align-items:flex-start;gap:8px;overflow:hidden}
+  .row{flex:0 1 auto;min-height:0;display:flex;align-items:flex-start;gap:8px;overflow:hidden}
   .panel{position:relative;flex:1;min-width:0;align-self:stretch;display:flex;background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:2px 8px;transition:border-color .2s}
   .panel:focus-within{border-color:var(--acc)}
   textarea{flex:1;min-width:0;height:auto;min-height:0;border:0;padding:11px 8px;font:inherit;font-size:19px;line-height:1.4;background:transparent;color:var(--ink);resize:none;transition:opacity .2s}
@@ -58,7 +58,7 @@
   <div class="row">
     <button id="fix" aria-label="תקן"><svg viewBox="0 0 24 24"><path d="M4 20L15 9"/><path d="M13 7l4 4"/><path d="M18 2.5v3M16.5 4h3"/><path d="M20.5 9v2.5M19.25 10.25h2.5"/><path d="M9 3v2M8 4h2"/></svg></button>
     <div class="panel" id="panel">
-      <textarea id="in" rows="2" placeholder="כתוב איך שיוצא…"></textarea>
+      <textarea id="in" rows="1" placeholder="כתוב איך שיוצא…"></textarea>
       <div id="toast"></div>
     </div>
   </div>
@@ -94,7 +94,9 @@ inp.addEventListener('input',save);
 
 let tt; function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),1800)}
 function pushUndo(){undoStack.push(inp.value); if(undoStack.length>20) undoStack.shift()}
-function setText(t){inp.value=t; save()}
+function autoH(){const tools=document.querySelector('.tools'); const max=Math.max(44,window.innerHeight-tools.offsetHeight-60); inp.style.height='auto'; inp.style.height=Math.min(max,Math.max(44,inp.scrollHeight))+'px'}
+function setText(t){inp.value=t; save(); autoH()}
+inp.addEventListener('input',autoH); window.addEventListener('resize',autoH); setTimeout(autoH,0);
 
 /* ---- API key ---- */
 function getKey(){try{return localStorage.getItem('apiKey')||''}catch(e){return ''}}
