@@ -13,61 +13,62 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#f6f4f0;--card:#fff;--ink:#1f2328;--mute:#80868d;--acc:#2f7d68;--line:#e2ddd5;--chip:#ece8e1}
-  @media (prefers-color-scheme:dark){:root{--bg:#121416;--card:#1c1f22;--ink:#eceae6;--mute:#8b9197;--acc:#4fb196;--line:#2c3035;--chip:#262a2e}}
+  :root{--bg:#f6f4f0;--card:#fff;--ink:#1f2328;--mute:#80868d;--acc:#2f9e6e;--line:#e2ddd5;--chip:#ece8e1}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f1418;--card:#1a2026;--ink:#eceae6;--mute:#8b9197;--acc:#2fbf72;--line:#353c43;--chip:#262a2e}}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
-  body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;display:flex;flex-direction:column;padding:8px;padding-top:max(8px,env(safe-area-inset-top));gap:8px}
-  .box{position:relative;flex:1;min-height:70px;display:flex}
-  .box.sized{flex:none}
-  #grip{height:40px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;margin-top:-4px}
-  #grip span{width:44px;height:5px;border-radius:9px;background:var(--line)}
+  body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;display:flex;flex-direction:column;justify-content:flex-end;padding:6px 10px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  #grip{height:30px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;flex:none}
+  #grip span{width:48px;height:5px;border-radius:9px;background:var(--line)}
   #grip.drag span{background:var(--acc)}
-  textarea{flex:1;width:100%;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;font-size:19px;line-height:1.5;background:var(--card);color:var(--ink);resize:none;transition:opacity .2s}
-  textarea:focus{outline:none;border-color:var(--acc)}
+  .panel{position:relative;display:flex;align-items:flex-end;gap:4px;background:var(--card);border:1.5px solid var(--line);border-radius:30px;padding:6px;transition:border-color .2s}
+  .panel:focus-within{border-color:var(--acc)}
+  textarea{flex:1;min-width:0;height:48px;border:0;padding:11px 8px;font:inherit;font-size:19px;line-height:1.4;background:transparent;color:var(--ink);resize:none;transition:opacity .2s}
+  textarea:focus{outline:none}
+  textarea::placeholder{color:var(--mute)}
   textarea.busy{opacity:.45}
-  textarea.lp{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 35%,transparent)}
-  .bar{display:flex;gap:6px;align-items:center}
-  button{border:0;border-radius:999px;font:inherit;font-size:15px;font-weight:500;cursor:pointer;height:40px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;background:var(--chip);color:var(--ink);transition:transform .08s,opacity .2s}
-  button:active{transform:scale(.95)}
+  .panel.lp{box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 40%,transparent)}
+  button{border:0;font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:transparent;transition:transform .08s,opacity .2s;flex:none}
+  button:active{transform:scale(.9)}
   button:disabled{opacity:.35}
-  button svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  #fix{background:var(--acc);color:#fff;font-weight:700;padding:0 20px}
-  .spacer{flex:1}
-  #orig.on{background:var(--acc);color:#fff}
-  .icon{width:40px;padding:0;justify-content:center}
-  #toast{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap}
-  #toast.on{opacity:.9}
+  button svg{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  #fix{width:52px;height:52px;border-radius:50%;background:var(--acc);color:#fff;margin:-2px}
+  #fix svg{width:26px;height:26px}
+  #fix.spin svg{animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .sep{width:1.5px;height:30px;background:var(--line);margin:0 4px 9px;flex:none;border-radius:2px}
+  .icon{width:40px;height:48px;border-radius:14px}
+  .icon svg{width:23px;height:23px}
+  #orig.on{color:var(--acc)}
+  #toast{position:fixed;bottom:calc(var(--ph,80px) + 18px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;z-index:5}
+  #toast.on{opacity:.92}
   /* key sheet */
   #keyScrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:16px;z-index:10}
   #keyScrim.on{display:flex}
-  .sheet{width:100%;max-width:460px;background:var(--card);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;margin-top:8vh}
+  .sheet{width:100%;max-width:460px;background:var(--card);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;margin-top:4vh}
   .sheet h2{margin:0;font-size:20px}
   .sheet p{margin:0;color:var(--mute);font-size:15px;line-height:1.5}
   .sheet a{color:var(--acc);font-weight:700}
   .sheet input{font:inherit;font-size:16px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;direction:ltr}
   .sheet .row{display:flex;gap:8px}
-  .sheet .row button{flex:1;justify-content:center}
-  .sheet .pri{background:var(--acc);color:#fff;font-weight:700}
+  .sheet .row button{flex:1;height:42px;border-radius:999px;background:var(--chip);font-size:15px;font-weight:500}
+  .sheet .pri{background:var(--acc)!important;color:#fff;font-weight:700}
 </style>
 </head>
 <body>
-  <div class="bar">
-    <button id="fix"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg><span id="fixLbl">תקן</span></button>
-    <button id="copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>העתק</button>
-    <span class="spacer"></span>
-    <button id="orig" class="icon" aria-label="מה כתבתי" style="display:none"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></button>
-    <button id="clear" class="icon" aria-label="מחק"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
-    <button id="keyBtn" class="icon" aria-label="הגדרות"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></svg></button>
-  </div>
-
-  <div class="box">
-    <textarea id="in" placeholder="כתוב איך שיוצא…"></textarea>
-    <div id="toast"></div>
-  </div>
   <div id="grip" aria-label="שנה גודל"><span></span></div>
+  <div class="panel" id="panel">
+    <button id="fix" aria-label="תקן"><svg viewBox="0 0 24 24"><path d="M4 20L15 9"/><path d="M13 7l4 4"/><path d="M18 2.5v3M16.5 4h3"/><path d="M20.5 9v2.5M19.25 10.25h2.5"/><path d="M9 3v2M8 4h2"/></svg></button>
+    <textarea id="in" rows="1" placeholder="כתוב איך שיוצא…"></textarea>
+    <span class="sep"></span>
+    <button id="orig" class="icon" aria-label="מה כתבתי" style="display:none"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></button>
+    <button id="copy" class="icon" aria-label="העתק"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></button>
+    <button id="clear" class="icon" aria-label="מחק"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+    <button id="keyBtn" class="icon" aria-label="מפתח"><svg viewBox="0 0 24 24"><circle cx="7.5" cy="16.5" r="4"/><path d="M10.5 13.5L20 4M16.5 7.5l3 3M14.5 9.5l2 2"/></svg></button>
+  </div>
+  <div id="toast"></div>
 
-  <div id="keyScrim">
+<div id="keyScrim">
     <div class="sheet" role="dialog" aria-modal="true">
       <h2>מפתח API</h2>
       <p>כדי לתקן, האפליקציה צריכה מפתח מחשבון Anthropic שלך. יוצרים אותו ב־<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> ומדביקים כאן. המפתח נשמר רק בטלפון הזה.</p>
@@ -165,7 +166,7 @@ async function fix(){
   if(!text||busy||!sample) return;
   if(sample===apiSample&&!getKey()){openKey();return}
   busy=true; $('fix').disabled=true; inp.classList.add('busy'); inp.readOnly=true;
-  let n=0; const lbl=$('fixLbl'); const iv=setInterval(()=>{lbl.textContent='מתקן'+'.'.repeat(n++%4)},300);
+  $('fix').classList.add('spin');
   ctrl=new AbortController();
   try{
     let ctx=[]; try{ctx=JSON.parse(localStorage.getItem('ctx')||'[]')}catch(e){}
@@ -185,7 +186,7 @@ async function fix(){
     else if(!navigator.onLine) toast('אין אינטרנט');
     else toast('משהו השתבש, נסה שוב');
   }finally{
-    clearInterval(iv); lbl.textContent='תקן'; busy=false; $('fix').disabled=false; inp.classList.remove('busy'); inp.readOnly=false;
+    $('fix').classList.remove('spin'); busy=false; $('fix').disabled=false; inp.classList.remove('busy'); inp.readOnly=false;
   }
 }
 
@@ -201,25 +202,27 @@ inp.addEventListener('input',()=>{ if(lastFixed && inp.value!==lastOrig && inp.v
 // long press = copy
 let lpT=null, lpReady=false, lpX=0, lpY=0;
 inp.addEventListener('pointerdown',e=>{ lpReady=false; lpX=e.clientX; lpY=e.clientY; clearTimeout(lpT);
-  lpT=setTimeout(()=>{ lpReady=true; inp.classList.add('lp'); try{navigator.vibrate&&navigator.vibrate(20)}catch(_){} },550); });
+  lpT=setTimeout(()=>{ lpReady=true; $('panel').classList.add('lp'); try{navigator.vibrate&&navigator.vibrate(20)}catch(_){} },550); });
 inp.addEventListener('pointermove',e=>{ if(Math.abs(e.clientX-lpX)+Math.abs(e.clientY-lpY)>12) clearTimeout(lpT); });
 inp.addEventListener('pointercancel',()=>{ if(!lpReady) clearTimeout(lpT); });
-inp.addEventListener('touchend',e=>{ clearTimeout(lpT); if(lpReady){ e.preventDefault(); lpReady=false; inp.classList.remove('lp'); copy(); } });
-inp.addEventListener('pointerup',e=>{ clearTimeout(lpT); if(lpReady){ e.preventDefault(); lpReady=false; inp.classList.remove('lp'); copy(); } });
+inp.addEventListener('touchend',e=>{ clearTimeout(lpT); if(lpReady){ e.preventDefault(); lpReady=false; $('panel').classList.remove('lp'); copy(); } });
+inp.addEventListener('pointerup',e=>{ clearTimeout(lpT); if(lpReady){ e.preventDefault(); lpReady=false; $('panel').classList.remove('lp'); copy(); } });
 inp.addEventListener('contextmenu',e=>e.preventDefault());
 $('copy').onclick=copy;
 $('clear').onclick=()=>{ if(ctrl) ctrl.abort(); if(!inp.value) return; pushUndo(); setText(''); inp.focus(); };
 
-// drag to resize
-const box=document.querySelector('.box'), grip=$('grip');
-function setH(h){const max=window.innerHeight-box.getBoundingClientRect().top-30; h=Math.max(70,Math.min(h,max)); box.style.height=h+'px'; box.classList.add('sized'); return h}
-const DEF_H=86; let h0=0; try{h0=+localStorage.getItem('boxH2')}catch(e){} setH(h0||DEF_H);
+// drag to resize (handle is above the box: drag up = taller)
+const grip=$('grip'), panel=$('panel');
+const MIN_H=48;
+function setH(h){const max=Math.max(MIN_H,window.innerHeight-90); h=Math.max(MIN_H,Math.min(h,max)); inp.style.height=h+'px'; document.documentElement.style.setProperty('--ph',panel.offsetHeight+'px'); return h}
+let h0=0; try{h0=+localStorage.getItem('inH')}catch(e){} setH(h0||MIN_H);
+window.addEventListener('resize',()=>setH(parseInt(inp.style.height)||MIN_H));
 let sy=0, sh=0;
-grip.addEventListener('pointerdown',e=>{sy=e.clientY; sh=box.getBoundingClientRect().height; grip.setPointerCapture(e.pointerId); grip.classList.add('drag')});
-grip.addEventListener('pointermove',e=>{if(!grip.classList.contains('drag'))return; setH(sh+e.clientY-sy)});
-const endDrag=()=>{if(!grip.classList.contains('drag'))return; grip.classList.remove('drag'); try{localStorage.setItem('boxH2',parseInt(box.style.height))}catch(e){}};
+grip.addEventListener('pointerdown',e=>{sy=e.clientY; sh=inp.getBoundingClientRect().height; grip.setPointerCapture(e.pointerId); grip.classList.add('drag')});
+grip.addEventListener('pointermove',e=>{if(!grip.classList.contains('drag'))return; setH(sh-(e.clientY-sy))});
+const endDrag=()=>{if(!grip.classList.contains('drag'))return; grip.classList.remove('drag'); try{localStorage.setItem('inH',parseInt(inp.style.height))}catch(e){}};
 grip.addEventListener('pointerup',endDrag); grip.addEventListener('pointercancel',endDrag);
-grip.addEventListener('dblclick',()=>{setH(DEF_H);try{localStorage.removeItem('boxH2')}catch(e){}});
+grip.addEventListener('dblclick',()=>{setH(MIN_H);try{localStorage.removeItem('inH')}catch(e){}});
 
 // installable app: offline shell
 if('serviceWorker' in navigator && location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
