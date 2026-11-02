@@ -94,7 +94,7 @@ inp.addEventListener('input',save);
 
 let tt; function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),1800)}
 function pushUndo(){undoStack.push(inp.value); if(undoStack.length>20) undoStack.shift()}
-function autoH(){const tools=document.querySelector('.tools'); const max=Math.max(38,window.innerHeight-tools.offsetHeight-30); inp.style.height='auto'; inp.style.height=Math.min(max,Math.max(38,inp.scrollHeight))+'px'}
+function autoH(){const tools=document.querySelector('.tools'); const max=Math.max(38,window.innerHeight-tools.offsetHeight-30); inp.style.height='auto'; const small=window.innerHeight<340; inp.style.height=(small?max:Math.min(max,Math.max(38,inp.scrollHeight)))+'px'}
 function setText(t){inp.value=t; save(); autoH()}
 inp.addEventListener('input',autoH); window.addEventListener('resize',autoH); setTimeout(autoH,0);
 
