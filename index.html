@@ -114,7 +114,7 @@ async function apiSample(prompt,{signal}={}){
   const r=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',signal,
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:MODEL,max_tokens:2000,messages:[{role:'user',content:prompt}]})
+    body:JSON.stringify({model:MODEL,max_tokens:8000,messages:[{role:'user',content:prompt}]})
   });
   if(!r.ok){
     let msg=''; try{msg=(await r.json()).error.message||''}catch(_){}
@@ -123,7 +123,7 @@ async function apiSample(prompt,{signal}={}){
     throw e;
   }
   const j=await r.json();
-  return {text:(j.content||[]).map(c=>c.text||'').join('')};
+  return {text:(j.content||[]).map(c=>c.text||'').join(''),truncated:j.stop_reason==='max_tokens'};
 }
 
 // Inside Claude use its built-in connection; everywhere else use the API key.
@@ -159,7 +159,7 @@ ${EXAMPLES.map(([a,b])=>'כתב: '+a+'\nהתכוון: '+b).join('\n\n')}
 ${ctx.length?`ההודעות האחרונות שלו, רק כדי להבין על מה הוא מדבר עכשיו (לא לתקן):
 ${ctx.map(c=>'- '+c).join('\n')}
 
-`:''}חשוב קודם בקצרה על המילים הקשות, ואז כתוב את ההודעה המשוחזרת כולה בין <fixed> ל-</fixed>.
+`:''}חשוב קודם בקצרה, רק על המילים הקשות (לא על כל ההודעה), ואז כתוב את ההודעה המשוחזרת כולה בין <fixed> ל-</fixed>.
 
 ההודעה:
 ${t}`;
@@ -174,8 +174,9 @@ async function fix(){
   try{
     let ctx=[]; try{ctx=JSON.parse(localStorage.getItem('ctx')||'[]')}catch(e){}
     const r=await sample(PROMPT(text,ctx),{signal:ctrl.signal,cache:false,modelTier:'complex'});
-    const m=(r.text||'').match(/<fixed>([\s\S]*?)(<\/fixed>|$)/);
-    const res=m?m[1].trim():'';
+    const all=[...(r.text||'').matchAll(/<fixed>([\s\S]*?)<\/fixed>/g)];
+    if(!all.length){toast(r.truncated?'ההודעה ארוכה מדי, נסה לחלק':'משהו השתבש, נסה שוב');return}
+    const res=all[all.length-1][1].trim();
     if(res){try{const c=JSON.parse(localStorage.getItem('ctx')||'[]');c.push(res);localStorage.setItem('ctx',JSON.stringify(c.slice(-6)))}catch(e){}}
     if(res && res!==inp.value){pushUndo(); lastOrig=inp.value; lastFixed=res; showingOrig=false; setText(res); $('orig').disabled=false; $('orig').classList.remove('on'); toast('תוקן ✓')} else toast('נראה תקין');
   }catch(e){
