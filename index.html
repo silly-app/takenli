@@ -33,7 +33,7 @@
   button:active{transform:scale(.9)}
   button:disabled{opacity:.35}
   button svg{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  #fix{width:auto;height:40px;max-height:100%;aspect-ratio:1;padding:0;border-radius:50%;background:var(--acc);color:#fff}
+  #fix{width:40px;height:40px;padding:0;border-radius:50%;background:var(--acc);color:#fff;flex:none}
   #fix svg{width:26px;height:26px}
   #fix.spin svg{animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -58,13 +58,13 @@
 </head>
 <body>
   <div class="row">
-    <button id="fix" aria-label="תקן"><svg viewBox="0 0 24 24"><path d="M4 20L15 9"/><path d="M13 7l4 4"/><path d="M18 2.5v3M16.5 4h3"/><path d="M20.5 9v2.5M19.25 10.25h2.5"/><path d="M9 3v2M8 4h2"/></svg></button>
     <div class="panel" id="panel">
       <textarea id="in" rows="1" placeholder="כתוב איך שיוצא…"></textarea>
       <div id="toast"></div>
     </div>
   </div>
   <div class="tools">
+    <button id="fix" aria-label="תקן"><svg viewBox="0 0 24 24"><path d="M4 20L15 9"/><path d="M13 7l4 4"/><path d="M18 2.5v3M16.5 4h3"/><path d="M20.5 9v2.5M19.25 10.25h2.5"/><path d="M9 3v2M8 4h2"/></svg></button>
     <button id="copy" class="copybtn" aria-label="העתק">העתק</button>
     <button id="clear" class="icon" aria-label="מחק"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
     <span class="spacer"></span>
@@ -219,9 +219,17 @@ async function copy(){
   catch(e){ try{inp.select(); if(document.execCommand('copy')){inp.setSelectionRange(inp.value.length,inp.value.length); toast('הועתק ✓'); return}}catch(_){} inp.focus(); inp.select(); toast('סמן והעתק')}
 }
 
+async function readClip(){
+  try{ window.focus(); inp.focus() }catch(_){}
+  try{
+    const items=await navigator.clipboard.read();
+    for(const it of items){ if(it.types.includes('text/plain')){ const t=await (await it.getType('text/plain')).text(); if(t) return t } }
+  }catch(_){}
+  return await navigator.clipboard.readText();
+}
 async function pasteIn(){
   let t='';
-  try{t=await navigator.clipboard.readText()}catch(e){inp.focus(); toast('לחץ ארוך בתיבה ובחר הדבק'); return}
+  try{t=await readClip()}catch(e){inp.focus(); toast('לחץ ארוך בתיבה ובחר הדבק'); return}
   if(!t){toast('אין מה להדביק'); return}
   inp.focus(); const st=inp.selectionStart??inp.value.length, en=inp.selectionEnd??inp.value.length;
   setText(inp.value.slice(0,st)+t+inp.value.slice(en)); const pos=st+t.length; try{inp.setSelectionRange(pos,pos)}catch(_){}
