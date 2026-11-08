@@ -18,7 +18,7 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0;overflow:hidden}
   body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;display:flex;flex-direction:column;gap:2px;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));padding-bottom:calc(4px + env(safe-area-inset-bottom));height:100dvh}
-  .tools{display:flex;align-items:center;gap:6px;height:46px;flex:none;padding-top:4px}
+  .tools{display:flex;align-items:center;gap:6px;height:52px;flex:none;padding-top:4px}
   .copybtn{height:40px;padding:0 26px;border-radius:999px;background:var(--acc);color:#fff;font-size:17px;font-weight:700}
   .spacer{flex:1}
   .row{flex:0 1 auto;min-height:0;display:flex;align-items:flex-start;gap:8px;overflow:hidden}
@@ -38,6 +38,8 @@
   #fix.spin svg{animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .icon{width:42px;height:40px;border-radius:12px}
+  #clear{width:64px;height:48px;border-radius:14px;margin-inline-start:6px}
+  #clear svg{width:26px;height:26px}
   .icon svg{width:21px;height:21px}
   #orig.on{color:var(--acc)}
   #orig:disabled{opacity:.25}
@@ -96,7 +98,7 @@ function save(){try{localStorage.setItem('draft',inp.value)}catch(e){}}
 try{const d=localStorage.getItem('draft'); if(d) inp.value=d;}catch(e){}
 inp.addEventListener('input',save);
 
-let tt; function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),1800)}
+let tt; function toast(m,ms=1800){toastEl.textContent=m;toastEl.style.pointerEvents='none';toastEl.onclick=null;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),ms)}
 function pushUndo(){undoStack.push(inp.value); if(undoStack.length>20) undoStack.shift()}
 function autoH(){const tools=document.querySelector('.tools'); const max=Math.max(38,window.innerHeight-tools.offsetHeight-30); inp.style.height='auto'; const small=window.innerHeight<340; inp.style.height=(small?max:Math.min(max,Math.max(38,inp.scrollHeight)))+'px'}
 function setText(t){inp.value=t; save(); autoH()}
@@ -249,7 +251,10 @@ inp.addEventListener('touchend',e=>{ clearTimeout(lpT); if(lpReady){ e.preventDe
 inp.addEventListener('pointerup',e=>{ clearTimeout(lpT); if(lpReady){ e.preventDefault(); lpReady=false; $('panel').classList.remove('lp'); copy(); } });
 inp.addEventListener('contextmenu',e=>e.preventDefault());
 $('copy').onclick=copy;
-$('clear').onclick=()=>{ if(ctrl) ctrl.abort(); if(!inp.value) return; pushUndo(); setText(''); inp.focus(); };
+let cleared=null;
+$('clear').onclick=()=>{ if(ctrl) ctrl.abort(); if(!inp.value) return; cleared=inp.value; pushUndo(); setText(''); inp.focus();
+  toast('נמחק · לחץ כאן לשחזור',6000); toastEl.style.pointerEvents='auto';
+  toastEl.onclick=()=>{ if(cleared!=null){setText(cleared); cleared=null; toast('שוחזר ✓')} }; };
 
 // size: the text box fills whatever height the window (e.g. Samsung split screen) gives it
 
