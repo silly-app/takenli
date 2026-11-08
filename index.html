@@ -67,6 +67,7 @@
   <div class="tools">
     <button id="copy" class="copybtn" aria-label="העתק">העתק</button>
     <button id="clear" class="icon" aria-label="מחק"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+    <button id="paste" class="icon" aria-label="הדבק"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 4v2h6V4"/><path d="M9 12h6M9 16h6"/></svg></button>
     <span class="spacer"></span>
     <button id="orig" class="icon" aria-label="מה כתבתי" disabled><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></button>
     <button id="keyBtn" class="icon" aria-label="מפתח"><svg viewBox="0 0 24 24"><circle cx="7.5" cy="16.5" r="4"/><path d="M10.5 13.5L20 4M16.5 7.5l3 3M14.5 9.5l2 2"/></svg></button>
@@ -218,6 +219,15 @@ async function copy(){
   catch(e){ try{inp.select(); if(document.execCommand('copy')){inp.setSelectionRange(inp.value.length,inp.value.length); toast('הועתק ✓'); return}}catch(_){} inp.focus(); inp.select(); toast('סמן והעתק')}
 }
 
+async function pasteIn(){
+  let t='';
+  try{t=await navigator.clipboard.readText()}catch(e){inp.focus(); toast('לחץ ארוך בתיבה ובחר הדבק'); return}
+  if(!t){toast('אין מה להדביק'); return}
+  inp.focus(); const st=inp.selectionStart??inp.value.length, en=inp.selectionEnd??inp.value.length;
+  setText(inp.value.slice(0,st)+t+inp.value.slice(en)); const pos=st+t.length; try{inp.setSelectionRange(pos,pos)}catch(_){}
+  toast('הודבק ✓');
+}
+$('paste').onclick=pasteIn;
 $('fix').onclick=fix;
 $('orig').onclick=()=>{ showingOrig=!showingOrig; setText(showingOrig?lastOrig:lastFixed); $('orig').classList.toggle('on',showingOrig); };
 inp.addEventListener('input',()=>{ if(lastFixed && inp.value!==lastOrig && inp.value!==lastFixed){ $('orig').disabled=true; $('orig').classList.remove('on'); lastFixed=''; } });
