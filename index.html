@@ -43,8 +43,8 @@
   .icon svg{width:21px;height:21px}
   #orig.on{color:var(--acc)}
   #orig:disabled{opacity:.25}
-  #toast{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:16px;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;white-space:pre-line;max-width:94%;line-height:1.5;direction:rtl;z-index:5}
-  #toast.on{opacity:.92}
+  #toast{pointer-events:none;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:16px;text-align:center;opacity:0;transition:opacity .2s;white-space:pre-line;max-width:94%;line-height:1.5;direction:rtl;z-index:5}
+  #toast.on{opacity:.92;pointer-events:auto}
   /* key sheet */
   #keyScrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:16px;z-index:10}
   #keyScrim.on{display:flex}
@@ -98,7 +98,9 @@ function save(){try{localStorage.setItem('draft',inp.value)}catch(e){}}
 try{const d=localStorage.getItem('draft'); if(d) inp.value=d;}catch(e){}
 inp.addEventListener('input',save);
 
-let tt; function toast(m,ms=1800){toastEl.textContent=m;toastEl.style.pointerEvents='none';toastEl.onclick=null;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),ms)}
+let tt; function hideToast(){clearTimeout(tt);toastEl.classList.remove('on');}
+let sx=null; toastEl.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true}); toastEl.addEventListener('touchend',e=>{if(sx!=null&&Math.abs(e.changedTouches[0].clientX-sx)>25){e.preventDefault();hideToast()} sx=null});
+function toast(m,ms=1800){toastEl.textContent=m;toastEl.onclick=hideToast;toastEl.style.transform='translateX(-50%)';toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('on'),ms)}
 function pushUndo(){undoStack.push(inp.value); if(undoStack.length>20) undoStack.shift()}
 function autoH(){const tools=document.querySelector('.tools'); const max=Math.max(38,window.innerHeight-tools.offsetHeight-30); inp.style.height='auto'; const small=window.innerHeight<340; inp.style.height=(small?max:Math.min(max,Math.max(38,inp.scrollHeight)))+'px'}
 function setText(t){inp.value=t; save(); autoH()}
@@ -209,7 +211,7 @@ async function fix(){
     if(!mm||(r.truncated&&!/<\/fixed>/.test(t0))){toast(r.truncated?'ההודעה ארוכה מדי, נסה לחלק':'משהו השתבש, נסה שוב');return}
     const res=mm[1].trim();
     if(res){try{const c=JSON.parse(localStorage.getItem('ctx')||'[]');c.push(res);localStorage.setItem('ctx',JSON.stringify(c.slice(-6)))}catch(e){}}
-    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); {const f=v=>v==null?'-':(v/1000).toFixed(1); toast('תוקן ✓ '+((Date.now()-t_start)/1000).toFixed(1)+'ש׳ '+(text.length<=SHORT_MAX?'מהיר':'מדויק')+'\nחיבור '+f(T.conn)+' · התחלה '+f(T.first)+' · טקסט '+f(T.text1)+' · סוף '+f(T.end)+(T.think?' · חשב':'')+(T.variant?' · ניסיון '+(T.variant+1):'')+' · '+(T.chars||0)+' תווים',9000)} $('orig').disabled=false; $('orig').classList.remove('on')} else toast('נראה תקין');
+    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); toast('תוקן ✓',1500); $('orig').disabled=false; $('orig').classList.remove('on')} else toast('נראה תקין');
   }catch(e){
     const c=e&&e.code;
     if(e&&e.name==='AbortError'){}
@@ -263,8 +265,7 @@ inp.addEventListener('contextmenu',e=>e.preventDefault());
 $('copy').onclick=copy;
 let cleared=null;
 $('clear').onclick=()=>{ if(ctrl) ctrl.abort(); if(!inp.value) return; cleared=inp.value; pushUndo(); setText(''); inp.focus();
-  toast('נמחק · לחץ כאן לשחזור',6000); toastEl.style.pointerEvents='auto';
-  toastEl.onclick=()=>{ if(cleared!=null){setText(cleared); cleared=null; toast('שוחזר ✓')} }; };
+  toast('נמחק · לחץ כאן לשחזור',6000);   toastEl.onclick=()=>{ if(cleared!=null){setText(cleared); cleared=null; toast('שוחזר ✓')} }; };
 
 // size: the text box fills whatever height the window (e.g. Samsung split screen) gives it
 
