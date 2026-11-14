@@ -92,7 +92,7 @@
 const $=id=>document.getElementById(id);
 const inp=$('in'), toastEl=$('toast');
 let sample=null, busy=false, ctrl=null, undoStack=[], lastOrig='', lastFixed='', showingOrig=false;
-const MODEL='claude-opus-5-5';
+const MODEL_LONG='claude-opus-5-5', MODEL_SHORT='claude-sonnet-5-5', SHORT_MAX=300;
 
 function save(){try{localStorage.setItem('draft',inp.value)}catch(e){}}
 try{const d=localStorage.getItem('draft'); if(d) inp.value=d;}catch(e){}
@@ -114,13 +114,13 @@ $('keyScrim').addEventListener('click',e=>{if(e.target.id==='keyScrim')closeKey(
 $('keySave').onclick=()=>{const k=$('keyIn').value.trim(); if(!k){toast('הדבק מפתח');return} try{localStorage.setItem('apiKey',k)}catch(e){} closeKey(); toast('המפתח נשמר ✓')};
 $('keyDel').onclick=()=>{try{localStorage.removeItem('apiKey')}catch(e){} $('keyIn').value=''; toast('המפתח נמחק')};
 
-async function apiSample(prompt,{signal,onText}={}){
+async function apiSample(prompt,{signal,onText,model}={}){
   const key=getKey();
   if(!key){const e=new Error('no key');e.code='no_key';throw e}
   const call=extra=>fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',signal,
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify(Object.assign({model:MODEL,max_tokens:16000,stream:true,messages:[{role:'user',content:prompt}]},extra))
+    body:JSON.stringify(Object.assign({model:model||MODEL_LONG,max_tokens:16000,stream:true,messages:[{role:'user',content:prompt}]},extra))
   });
   let r=await call({thinking:{type:'disabled'}});
   if(r.status===400){ const r2=await call({}); if(r2.ok) r=r2; }
@@ -196,12 +196,12 @@ async function fix(){
   const stream=t=>{ if(!t||t==='Thinking...')return; const m=t.match(/<fixed>([\s\S]*)/); if(!m)return; const part=m[1].replace(/<\/fixed>[\s\S]*$/,'').trimStart(); if(part){inp.value=part; autoH()} };
   try{
     let ctx=[]; try{ctx=JSON.parse(localStorage.getItem('ctx')||'[]')}catch(e){}
-    const r=await sample(PROMPT(text,ctx),{signal:ctrl.signal,cache:false,modelTier:'complex',onText:({text:t})=>stream(t)});
+    const r=await sample(PROMPT(text,ctx),{signal:ctrl.signal,cache:false,modelTier:'complex',model:(text.length<=SHORT_MAX?MODEL_SHORT:MODEL_LONG),onText:({text:t})=>stream(t)});
     const t0=r.text||''; const mm=t0.match(/<fixed>([\s\S]*?)(<\/fixed>|$)/);
     if(!mm||(r.truncated&&!/<\/fixed>/.test(t0))){toast(r.truncated?'ההודעה ארוכה מדי, נסה לחלק':'משהו השתבש, נסה שוב');return}
     const res=mm[1].trim();
     if(res){try{const c=JSON.parse(localStorage.getItem('ctx')||'[]');c.push(res);localStorage.setItem('ctx',JSON.stringify(c.slice(-6)))}catch(e){}}
-    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); toast('תוקן ✓ '+((Date.now()-t_start)/1000).toFixed(1)+'ש׳'); $('orig').disabled=false; $('orig').classList.remove('on')} else toast('נראה תקין');
+    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); toast('תוקן ✓ '+((Date.now()-t_start)/1000).toFixed(1)+'ש׳ '+(text.length<=SHORT_MAX?'(מהיר)':'(מדויק)')); $('orig').disabled=false; $('orig').classList.remove('on')} else toast('נראה תקין');
   }catch(e){
     const c=e&&e.code;
     if(e&&e.name==='AbortError'){}
