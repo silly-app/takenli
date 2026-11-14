@@ -124,8 +124,9 @@ async function apiSample(prompt,{signal,onText,model}={}){
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify(Object.assign({model:model||MODEL_LONG,max_tokens:16000,stream:true,messages:[{role:'user',content:prompt}]},extra))
   });
-  let r=await call({thinking:{type:'disabled'}});
-  if(r.status===400){ const r2=await call({}); T.retry=true; if(r2.ok) r=r2; }
+  const sonnet=/sonnet/.test(model||'');
+  const variants=sonnet?[{thinking:{type:'between_tools'},output_config:{effort:'low'}},{output_config:{effort:'low'}},{}]:[{output_config:{effort:'low'}},{}];
+  let r; for(let i=0;i<variants.length;i++){ r=await call(variants[i]); T.variant=i; if(r.status!==400) break; }
   T.conn=Date.now()-t0;
   if(!r.ok){
     let msg=''; try{msg=(await r.json()).error.message||''}catch(_){}
@@ -208,7 +209,7 @@ async function fix(){
     if(!mm||(r.truncated&&!/<\/fixed>/.test(t0))){toast(r.truncated?'ההודעה ארוכה מדי, נסה לחלק':'משהו השתבש, נסה שוב');return}
     const res=mm[1].trim();
     if(res){try{const c=JSON.parse(localStorage.getItem('ctx')||'[]');c.push(res);localStorage.setItem('ctx',JSON.stringify(c.slice(-6)))}catch(e){}}
-    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); {const f=v=>v==null?'-':(v/1000).toFixed(1); toast('תוקן ✓ '+((Date.now()-t_start)/1000).toFixed(1)+'ש׳ '+(text.length<=SHORT_MAX?'מהיר':'מדויק')+'\nחיבור '+f(T.conn)+' · התחלה '+f(T.first)+' · טקסט '+f(T.text1)+' · סוף '+f(T.end)+(T.think?' · חשב':'')+(T.retry?' · ניסיון חוזר':'')+' · '+(T.chars||0)+' תווים',9000)} $('orig').disabled=false; $('orig').classList.remove('on')} else toast('נראה תקין');
+    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); {const f=v=>v==null?'-':(v/1000).toFixed(1); toast('תוקן ✓ '+((Date.now()-t_start)/1000).toFixed(1)+'ש׳ '+(text.length<=SHORT_MAX?'מהיר':'מדויק')+'\nחיבור '+f(T.conn)+' · התחלה '+f(T.first)+' · טקסט '+f(T.text1)+' · סוף '+f(T.end)+(T.think?' · חשב':'')+(T.variant?' · ניסיון '+(T.variant+1):'')+' · '+(T.chars||0)+' תווים',9000)} $('orig').disabled=false; $('orig').classList.remove('on')} else toast('נראה תקין');
   }catch(e){
     const c=e&&e.code;
     if(e&&e.name==='AbortError'){}
