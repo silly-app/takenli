@@ -43,7 +43,7 @@
   .icon svg{width:21px;height:21px}
   #orig.on{color:var(--acc)}
   #orig:disabled{opacity:.25}
-  #toast{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;z-index:5}
+  #toast{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:14px;padding:6px 12px;border-radius:16px;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;white-space:pre-line;max-width:94%;line-height:1.5;direction:rtl;z-index:5}
   #toast.on{opacity:.92}
   /* key sheet */
   #keyScrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:16px;z-index:10}
@@ -114,7 +114,9 @@ $('keyScrim').addEventListener('click',e=>{if(e.target.id==='keyScrim')closeKey(
 $('keySave').onclick=()=>{const k=$('keyIn').value.trim(); if(!k){toast('הדבק מפתח');return} try{localStorage.setItem('apiKey',k)}catch(e){} closeKey(); toast('המפתח נשמר ✓')};
 $('keyDel').onclick=()=>{try{localStorage.removeItem('apiKey')}catch(e){} $('keyIn').value=''; toast('המפתח נמחק')};
 
+let T={};
 async function apiSample(prompt,{signal,onText,model}={}){
+  const t0=Date.now(); T={retry:false,think:0};
   const key=getKey();
   if(!key){const e=new Error('no key');e.code='no_key';throw e}
   const call=extra=>fetch('https://api.anthropic.com/v1/messages',{
@@ -123,7 +125,8 @@ async function apiSample(prompt,{signal,onText,model}={}){
     body:JSON.stringify(Object.assign({model:model||MODEL_LONG,max_tokens:16000,stream:true,messages:[{role:'user',content:prompt}]},extra))
   });
   let r=await call({thinking:{type:'disabled'}});
-  if(r.status===400){ const r2=await call({}); if(r2.ok) r=r2; }
+  if(r.status===400){ const r2=await call({}); T.retry=true; if(r2.ok) r=r2; }
+  T.conn=Date.now()-t0;
   if(!r.ok){
     let msg=''; try{msg=(await r.json()).error.message||''}catch(_){}
     const e=new Error(msg);
@@ -139,11 +142,15 @@ async function apiSample(prompt,{signal,onText,model}={}){
       if(!line.startsWith('data:'))continue;
       const d=line.slice(5).trim(); if(!d||d==='[DONE]')continue;
       let ev; try{ev=JSON.parse(d)}catch(_){continue}
+      if(T.first==null) T.first=Date.now()-t0;
+      if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='thinking_delta') T.think++;
+      if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='text_delta'&&T.text1==null) T.text1=Date.now()-t0;
       if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='text_delta'){text+=ev.delta.text; if(onText)onText({text})}
       else if(ev.type==='message_delta'&&ev.delta&&ev.delta.stop_reason){stop=ev.delta.stop_reason}
       else if(ev.type==='error'){const e=new Error((ev.error&&ev.error.message)||''); e.code=/overload|rate/i.test(e.message)?'rate_limited':'api_stream'; throw e}
     }
   }
+  T.end=Date.now()-t0; T.chars=text.length;
   return {text,truncated:stop==='max_tokens'};
 }
 
@@ -201,7 +208,7 @@ async function fix(){
     if(!mm||(r.truncated&&!/<\/fixed>/.test(t0))){toast(r.truncated?'ההודעה ארוכה מדי, נסה לחלק':'משהו השתבש, נסה שוב');return}
     const res=mm[1].trim();
     if(res){try{const c=JSON.parse(localStorage.getItem('ctx')||'[]');c.push(res);localStorage.setItem('ctx',JSON.stringify(c.slice(-6)))}catch(e){}}
-    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); toast('תוקן ✓ '+((Date.now()-t_start)/1000).toFixed(1)+'ש׳ '+(text.length<=SHORT_MAX?'(מהיר)':'(מדויק)')); $('orig').disabled=false; $('orig').classList.remove('on')} else toast('נראה תקין');
+    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); {const f=v=>v==null?'-':(v/1000).toFixed(1); toast('תוקן ✓ '+((Date.now()-t_start)/1000).toFixed(1)+'ש׳ '+(text.length<=SHORT_MAX?'מהיר':'מדויק')+'\nחיבור '+f(T.conn)+' · התחלה '+f(T.first)+' · טקסט '+f(T.text1)+' · סוף '+f(T.end)+(T.think?' · חשב':'')+(T.retry?' · ניסיון חוזר':'')+' · '+(T.chars||0)+' תווים',9000)} $('orig').disabled=false; $('orig').classList.remove('on')} else toast('נראה תקין');
   }catch(e){
     const c=e&&e.code;
     if(e&&e.name==='AbortError'){}
