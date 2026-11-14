@@ -117,11 +117,13 @@ $('keyDel').onclick=()=>{try{localStorage.removeItem('apiKey')}catch(e){} $('key
 async function apiSample(prompt,{signal,onText}={}){
   const key=getKey();
   if(!key){const e=new Error('no key');e.code='no_key';throw e}
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
+  const call=extra=>fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',signal,
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:MODEL,max_tokens:16000,stream:true,messages:[{role:'user',content:prompt}]})
+    body:JSON.stringify(Object.assign({model:MODEL,max_tokens:16000,stream:true,messages:[{role:'user',content:prompt}]},extra))
   });
+  let r=await call({thinking:{type:'disabled'}});
+  if(r.status===400){ const r2=await call({}); if(r2.ok) r=r2; }
   if(!r.ok){
     let msg=''; try{msg=(await r.json()).error.message||''}catch(_){}
     const e=new Error(msg);
@@ -189,7 +191,7 @@ async function fix(){
   if(sample===apiSample&&!getKey()){openKey();return}
   busy=true; $('fix').disabled=true; inp.classList.add('busy'); inp.readOnly=true;
   $('fix').classList.add('spin');
-  ctrl=new AbortController();
+  ctrl=new AbortController(); const t_start=Date.now();
   const origText=inp.value; let committed=false;
   const stream=t=>{ if(!t||t==='Thinking...')return; const m=t.match(/<fixed>([\s\S]*)/); if(!m)return; const part=m[1].replace(/<\/fixed>[\s\S]*$/,'').trimStart(); if(part){inp.value=part; autoH()} };
   try{
@@ -199,7 +201,7 @@ async function fix(){
     if(!mm||(r.truncated&&!/<\/fixed>/.test(t0))){toast(r.truncated?'ההודעה ארוכה מדי, נסה לחלק':'משהו השתבש, נסה שוב');return}
     const res=mm[1].trim();
     if(res){try{const c=JSON.parse(localStorage.getItem('ctx')||'[]');c.push(res);localStorage.setItem('ctx',JSON.stringify(c.slice(-6)))}catch(e){}}
-    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); $('orig').disabled=false; $('orig').classList.remove('on'); toast('תוקן ✓')} else toast('נראה תקין');
+    if(res && res!==origText){inp.value=origText; pushUndo(); lastOrig=origText; lastFixed=res; committed=true; showingOrig=false; setText(res); toast('תוקן ✓ '+((Date.now()-t_start)/1000).toFixed(1)+'ש׳'); $('orig').disabled=false; $('orig').classList.remove('on')} else toast('נראה תקין');
   }catch(e){
     const c=e&&e.code;
     if(e&&e.name==='AbortError'){}
